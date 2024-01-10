@@ -1,0 +1,66 @@
+<script type="text/javascript">
+
+  $(document).ready(function() {
+    let line_item_count = 0;
+
+    $("#add_line_item").click(function(e) {
+      let _id = line_item_count++;
+      let str = "<div>Name: <input data-id='" + _id + "' class='title' /> Quantity: <input type='number' data-id='" + _id + "' class='quantity' /> Cost: <input data-id='" + _id + "' class='cost' /></div>";
+      $(".line_items").append(str);
+      e.preventDefault();
+    })
+
+    $("#create_invoice").click(function(e) {
+
+      $.post("/api/invoices", function(invoices) {
+        invoice_id = invoices.id;
+
+        let line_item_at = 0;
+
+        let _post = function() {
+          if (line_item_at < line_item_count) {
+            let title = $('input[data-id=' + line_item_at + '].title').first().val();
+            let quantity = $('input[data-id=' + line_item_at + '].quantity').first().val();
+            let cost = $('input[data-id=' + line_item_at + '].cost').first().val();
+
+            $.post({url: "/api/invoices/" + invoice_id + "/line_item", data: {
+              line_item: {
+                title: title, quantity: quantity, cost: cost
+              }},
+              success: function() {
+                line_item_at++;
+                _post();
+              }
+            });
+          }
+
+        }
+
+        _post();
+
+        setTimeout(function() {
+          $.post("/api/invoices/" + invoice_id + "/finalise", function () {
+            window.location = "/invoices/" + invoice_id;
+          })
+        }, 500);
+
+      });
+
+      e.preventDefault();
+    })
+  });
+
+</script>
+
+<h1>Actions</h1>
+
+<a href="/">Show all Invoices</a>
+
+<h1>Invoice</h1>
+
+<div id="invoice">
+  <div class="line_items">
+  </div>
+  <a href="#" id="add_line_item" >Add Line Item</a>
+  <a href="#" id="create_invoice" >Create Invoice</a>
+</div>
